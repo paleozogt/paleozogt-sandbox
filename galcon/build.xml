@@ -4,7 +4,7 @@
         <property name="build" value="${basedir}/build"/>
         <property name="src" value="${basedir}/src"/>
 
-        <property name="example-bots" value="BullyBot,DualBot,ExpandBot,ProspectorBot,RageBot,RandomBot"/>
+        <property name="example-bots" value="BullyBot,DualBot,ProspectorBot,RageBot,RandomBot"/>
 
         <mkdir dir="${build}"/>
         <mkdir dir="${dist}"/>    
