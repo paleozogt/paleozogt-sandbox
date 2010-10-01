@@ -132,6 +132,15 @@ public class PlanetWars {
 	return (int)Math.ceil(Math.sqrt(dx * dx + dy * dy));
     }
 
+    // Returns the distance between two planets, rounded up to the next highest
+    // integer. This is the number of discrete time steps it takes to get
+    // between the two planets.
+    public int Distance(Planet source, Planet destination) {
+	double dx = source.X() - destination.X();
+	double dy = source.Y() - destination.Y();
+	return (int)Math.ceil(Math.sqrt(dx * dx + dy * dy));
+    }
+
     // Sends an order to the game engine. An order is composed of a source
     // planet number, a destination planet number, and a number of ships. A
     // few things to keep in mind:
@@ -226,6 +235,17 @@ public class PlanetWars {
 	    }
 	}
 	return numShips;
+    }
+
+    // Returns the production of the given player.
+    public int Production(int playerID) {
+	int prod = 0;
+	for (Planet p : planets) {
+	    if (p.Owner() == playerID) {
+		prod += p.GrowthRate();
+	    }
+	}
+	return prod;
     }
 
     // Parses a game state from a string. On success, returns 1. On failure,
