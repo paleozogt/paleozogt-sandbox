@@ -1,20 +1,63 @@
 <project name="galcon" basedir="." default="dist">
-    <target name="init">
+    <target name="init" depends="taskdef">
         <property name="dist" value="${basedir}/dist"/>
         <property name="build" value="${basedir}/build"/>
         <property name="src" value="${basedir}/src"/>
+
+        <property name="example-bots" value="BullyBot,Dualbot,ExpandBot,ProspectorBot,RageBot,RandomBot"/>
 
         <mkdir dir="${build}"/>
         <mkdir dir="${dist}"/>    
     </target>
 
-    <target name="build" depends="init">
-        <javac srcdir="${src}" destdir="${build}"/>
+    <target name="taskdef">
+        <property name="build-lib" value="${basedir}/build-lib"/>    
+        
+        <taskdef resource="net/sf/antcontrib/antlib.xml">
+            <classpath location="${build-lib}/ant-contrib-1.0b3.jar" />
+        </taskdef>
+    </target>
+
+    <target name="build" depends="init">   
+        <for param="bot" list="${example-bots}">
+            <sequential>
+                <mkdir dir="${build}/@{bot}"/>
+                <javac srcdir="example_bots" destdir="${build}/@{bot}">
+                    <include name="@{bot}.java"/>
+                    <src path="lib"/>
+                </javac>
+            </sequential>
+        </for>
+        
+        <mkdir dir="${build}/MyBot"/>
+        <javac srcdir="${src}" destdir="${build}/MyBot">
+            <src path="lib"/>
+        </javac>
+    </target>
+
+    <target name="jar" depends="build">
+        <for param="bot" list="${example-bots}">
+            <sequential>
+                <jar destfile="${dist}/@{bot}.jar" basedir="${build}/@{bot}">
+                    <manifest>
+                        <attribute name="Main-Class" value="@{bot}"/>
+                    </manifest>                
+                </jar>
+            </sequential>
+        </for>
+        
+        <jar destfile="${dist}/MyBot.jar" basedir="${build}/MyBot">
+            <manifest>
+                <attribute name="Main-Class" value="MyBot"/>
+            </manifest>                
+        </jar>
     </target>
     
-    <target name="dist" depends="build">
-        <jar destfile="${dist}/${ant.project.name}.jar" basedir="${build}"/>
-        <zip destfile="${dist}/${ant.project.name}.zip" basedir="${src}"/>
+    <target name="dist" depends="build,jar">
+        <zip destfile="${dist}/MyBot.zip">
+            <zipfileset dir="${src}"/>
+            <zipfileset dir="lib"/>
+        </zip>
     </target>
 
 </project>
