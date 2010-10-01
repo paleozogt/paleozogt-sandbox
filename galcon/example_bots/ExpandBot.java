@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class BullyBot {
+public class ExpandBot {
     public static void DoTurn(PlanetWars pw) {
 	// (1) If we current have a fleet in flight, just do nothing.
 	if (pw.MyFleets().size() >= 1) {
