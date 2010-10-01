@@ -1,0 +1,21 @@
+<project name="galcon" basedir="." default="dist">
+    <target name="init">
+        <property name="dist" value="${basedir}/dist"/>
+        <property name="build" value="${basedir}/build"/>
+        <property name="src" value="${basedir}/src"/>
+
+        <mkdir dir="${build}"/>
+        <mkdir dir="${dist}"/>    
+    </target>
+
+    <target name="build" depends="init">
+        <javac srcdir="${src}" destdir="${build}"/>
+    </target>
+    
+    <target name="dist" depends="build">
+        <jar destfile="${dist}/${ant.project.name}.jar" basedir="${build}"/>
+        <zip destfile="${dist}/${ant.project.name}.zip" basedir="${src}"/>
+    </target>
+
+</project>
+
