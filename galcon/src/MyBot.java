@@ -49,125 +49,56 @@ public class MyBot {
 
     public void DoTurn(PlanetWars pw) {
         turnCount++;
+        log.println("\nturn " + turnCount);
         this.pw = pw;
 
-        List<Planet> enemyPlanets = pw.EnemyPlanets();
         List<Planet> myPlanets = pw.MyPlanets();
+        List<Planet> enemyPlanets = pw.EnemyPlanets();
         List<Planet> otherPlanets = pw.NotMyPlanets();
         List<Planet> dests;
         int myProduction = pw.Production(1);
         int enemyProduction = pw.Production(2);
 
-        if (turnCount == 0) {
-            doOpening();
-            return;
-        }
-
-        // get aggressive when cornered
-        if (myProduction < enemyProduction)
-            dests = otherPlanets;
-        // include enemyplanets when decisively winning
-        else if (myPlanets.size() > enemyPlanets.size() * 2
-                && myProduction > enemyProduction)
-            dests = otherPlanets;
-        // otherwise just grow
-        else
-            dests = pw.NeutralPlanets();
-
-        if (dests.size() <= 0)
-            dests = otherPlanets;
-
-        Collections.sort(dests, new SortByGrowthRate());
-
-        List<Planet> sources = new ArrayList<Planet>();
         for (Planet p : myPlanets) {
-            boolean amAttacked = false;
-            for (Fleet f : pw.EnemyFleets()) {
-                if (f.DestinationPlanet() == p.PlanetID()) {
-                    amAttacked = true;
-                }
-            }
-
-            if (!amAttacked)
-                sources.add(p);
-        }
-
-        boolean pickNewTarget = true;
-        if (lastAttackPlanet > -1) {
-            for (Fleet f : pw.EnemyFleets()) {
-                if (f.DestinationPlanet() == lastAttackPlanet) {
-                    pickNewTarget = false;
-                }
-            }
-        }
-
-        double ratio = (2.0 / 3.0);
-
-        Planet dest = null;
-        if (pickNewTarget) {
-            // find the best growth rate planet
-            int destScore = -1;
-            for (Planet p : dests) {
-                int score = Math.round((float) p.GrowthRate()
-                        / (float) p.NumShips());
-                if (score > destScore) {
-                    destScore = score;
-                    dest = p;
-                }
-            }
-        } else {
-            dest = pw.GetPlanet(lastAttackPlanet);
-        }
-
-        if (dest == null)
-            return;
-        lastAttackPlanet = dest.PlanetID();
-
-        for (Planet p : sources) {
-            if (p.NumShips() < 10 * p.GrowthRate()) {
-                continue;
-            }
-
-            int numShips = Math.max((int) (p.NumShips() * ratio), dest
-                    .NumShips()
-                    + dest.GrowthRate());
-            if (numShips > p.NumShips())
-                numShips = Math.min(p.GrowthRate(), p.NumShips());
-
-            pw.IssueOrder(p, dest, numShips);
+            log.println("source " + p.PlanetID() + " (" + p.NumShips() + ")");
+            attackBest(p, otherPlanets);
         }
     }
 
-    void doOpening() {
-        Planet source = pw.MyPlanets().get(0);
-        List<Planet> dests = pw.NeutralPlanets();
+    void attackBest(Planet source, List<Planet> dests) {
         List<RelativePlanetInfo> costs = calcTimeTillBreakEven(source, dests);
         int shipsremaining = source.NumShips();
 
         for (RelativePlanetInfo info : costs) {
             Planet p = pw.GetPlanet(info.planetTo);
-            log.println("p " + info.planetTo + " gr " + p.GrowthRate() + " ns "
-                    + p.NumShips() + " dist "
-                    + pw.Distance(info.planetFrom, info.planetTo) + " cost "
-                    + info.cost);
-
+            log.println("p " + info.planetTo + " gr " + p.GrowthRate() + " ns " +
+                        p.NumShips() + " dist " +
+                        pw.Distance(info.planetFrom, info.planetTo) + " cost " +
+                        info.cost);
+            
             int numships = p.NumShips() + 1;
-            shipsremaining -= numships;
-            if (shipsremaining <= 0)
-                break;
+            if (numships > source.NumShips())
+                numships= source.NumShips();
 
-            pw.IssueOrder(source, p, numships);
+            issueOrder(source, p, numships);
+            
+            if (source.NumShips() <= 0) break;
         }
     }
 
-    List<RelativePlanetInfo> calcTimeTillBreakEven(Planet from,
-            List<Planet> planets) {
+    void issueOrder(Planet s, Planet d, int numShips) {
+        s.decrementShips(numShips);
+        pw.IssueOrder(s, d, numShips);
+    }
+    
+    List<RelativePlanetInfo> calcTimeTillBreakEven(Planet from, List<Planet> planets) {
         List<RelativePlanetInfo> costs = new ArrayList<RelativePlanetInfo>();
         for (Planet p : planets) {
-            int cost = pw.Distance(from, p)
-                    + Math.round((float) p.NumShips() / (float) p.GrowthRate());
-            RelativePlanetInfo info = new RelativePlanetInfo(from.PlanetID(), p
-                    .PlanetID(), cost);
+            int conquerturns= Math.round((float)(p.NumShips() - from.NumShips()) / from.GrowthRate());
+            if (conquerturns < 0) conquerturns= 0;
+            
+            int cost = pw.Distance(from, p) + conquerturns + Math.round((float) p.NumShips() / (float) p.GrowthRate());
+            RelativePlanetInfo info = new RelativePlanetInfo(from.PlanetID(), p.PlanetID(), cost);
             costs.add(info);
         }
         Collections.sort(costs, new SortByCosts());
