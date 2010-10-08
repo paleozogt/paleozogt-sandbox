@@ -24,6 +24,10 @@ public class Planet implements Cloneable {
         return numShips;
     }
 
+    public void decrementShips(int num) {
+        numShips-= num;
+    }
+    
     public int GrowthRate() {
         return growthRate;
     }
