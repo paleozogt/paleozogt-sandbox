@@ -52,6 +52,8 @@ public class MyBot {
         log.println("\nturn " + turnCount);
         this.pw = pw;
 
+		boolean easyConquest= (turnCount < 1);
+
         List<Planet> myPlanets = pw.MyPlanets();
         List<Planet> enemyPlanets = pw.EnemyPlanets();
         List<Planet> otherPlanets = pw.NotMyPlanets();
@@ -61,13 +63,13 @@ public class MyBot {
 
         for (Planet p : myPlanets) {
             log.println("source " + p.PlanetID() + " (" + p.NumShips() + ")");
-            attackBest(p, otherPlanets);
+            attackBest(p, otherPlanets, easyConquest);
         }
     }
 
-    void attackBest(Planet source, List<Planet> dests) {
+    void attackBest(Planet source, List<Planet> dests, boolean easyConquest) {
         List<RelativePlanetInfo> costs = calcTimeTillBreakEven(source, dests);
-        int shipsremaining = source.NumShips();
+        int origNumShips = source.NumShips();
 
         for (RelativePlanetInfo info : costs) {
             Planet p = pw.GetPlanet(info.planetTo);
@@ -75,6 +77,10 @@ public class MyBot {
                         p.NumShips() + " dist " +
                         pw.Distance(info.planetFrom, info.planetTo) + " cost " +
                         info.cost);
+            
+            if (easyConquest && p.NumShips() > origNumShips/2) {
+            	continue;
+            }
             
             int numships = p.NumShips() + 1;
             if (numships > source.NumShips())
