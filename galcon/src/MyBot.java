@@ -94,6 +94,10 @@ public class MyBot {
     List<RelativePlanetInfo> calcTimeTillBreakEven(Planet from, List<Planet> planets) {
         List<RelativePlanetInfo> costs = new ArrayList<RelativePlanetInfo>();
         for (Planet p : planets) {
+        	// growthrate zero planets aren't worth considering
+        	// (plus, they screw up the formulas)
+        	if (p.GrowthRate() <= 0) continue;
+        
             int conquerturns= Math.round((float)(p.NumShips() - from.NumShips()) / from.GrowthRate());
             if (conquerturns < 0) conquerturns= 0;
             
