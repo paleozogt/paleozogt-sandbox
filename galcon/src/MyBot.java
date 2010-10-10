@@ -78,7 +78,7 @@ public class MyBot {
                         pw.Distance(info.planetFrom, info.planetTo) + " cost " +
                         info.cost);
             
-            if (easyConquest && p.NumShips() > origNumShips/2) {
+            if (easyConquest && (p.NumShips() > source.NumShips() || p.NumShips() > origNumShips/2)) {
             	continue;
             }
             
