@@ -43,6 +43,8 @@ public class MyBot {
     PrintStream log;
     PlanetWars pw;
 
+    Map<Integer, Boolean> amAttacking= new HashMap<Integer, Boolean>();
+    
     public MyBot() throws IOException {
         log = new PrintStream(new FileOutputStream("botlog.txt"));
     }
@@ -51,16 +53,22 @@ public class MyBot {
         turnCount++;
         log.println("\nturn " + turnCount);
         this.pw = pw;
-
+        
 		boolean easyConquest= (turnCount < 1);
 
         List<Planet> myPlanets = pw.MyPlanets();
         List<Planet> enemyPlanets = pw.EnemyPlanets();
         List<Planet> otherPlanets = pw.NotMyPlanets();
         List<Planet> dests;
+        List<Fleet> myFleets= pw.MyFleets();
         int myProduction = pw.Production(1);
         int enemyProduction = pw.Production(2);
 
+        // make a map of attack planets for easy access
+        for (Fleet f : myFleets) {
+        	amAttacking.put(f.DestinationPlanet(), true);
+        }
+        
         for (Planet p : myPlanets) {
             log.println("source " + p.PlanetID() + " (" + p.NumShips() + ")");
             attackBest(p, otherPlanets, easyConquest);
@@ -77,6 +85,11 @@ public class MyBot {
                         p.NumShips() + " dist " +
                         pw.Distance(info.planetFrom, info.planetTo) + " cost " +
                         info.cost);
+
+            // if one of my own is already attacking a neutral, move on
+            if (p.isNeutral() && amAttacking.containsKey(p.PlanetID())) {
+            	continue;
+            }
             
             if (easyConquest && (!canBeat(source, p) || p.NumShips() > origNumShips/2)) {
             	continue;
