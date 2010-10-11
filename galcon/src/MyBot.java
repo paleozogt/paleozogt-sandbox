@@ -73,14 +73,17 @@ public class MyBot {
 
         for (RelativePlanetInfo info : costs) {
             Planet p = pw.GetPlanet(info.planetTo);
-            log.println("p " + info.planetTo + " gr " + p.GrowthRate() + " ns " +
+            log.println("p " + info.planetTo + "(" + p.Owner() + ")" + " gr " + p.GrowthRate() + " ns " +
                         p.NumShips() + " dist " +
                         pw.Distance(info.planetFrom, info.planetTo) + " cost " +
                         info.cost);
             
-            if (easyConquest && (p.NumShips() > source.NumShips() || p.NumShips() > origNumShips/2)) {
+            if (easyConquest && (!canBeat(source, p) || p.NumShips() > origNumShips/2)) {
             	continue;
             }
+            
+            if (p.isNeutral() && !canBeat(source, p))
+            	break;
             
             int numships = p.NumShips() + 1;
             if (numships > source.NumShips())
@@ -91,6 +94,10 @@ public class MyBot {
             if (source.NumShips() <= 0) break;
         }
     }
+
+	boolean canBeat(Planet p1, Planet p2) {
+		return p1.NumShips() > p2.NumShips();
+	}
 
     void issueOrder(Planet s, Planet d, int numShips) {
         s.decrementShips(numShips);
