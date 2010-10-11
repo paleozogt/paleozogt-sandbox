@@ -39,32 +39,39 @@ class SortByGrowthRate implements Comparator<Planet> {
 public class MyBot {
 
     int turnCount = -1;
-    int lastAttackPlanet = -1;
+    long turnStart, turnEnd;
+    long turnTimeMax;
     PrintStream log;
     PlanetWars pw;
 
-    Map<Integer, Boolean> amAttacking= new HashMap<Integer, Boolean>();
+    List<Planet> myPlanets;
+    List<Planet> enemyPlanets;
+    List<Planet> otherPlanets;    
+    
+    Map<Integer, Boolean> amAttacking;
     
     public MyBot() throws IOException {
         log = new PrintStream(new FileOutputStream("botlog.txt"));
     }
 
     public void DoTurn(PlanetWars pw) {
+    	turnStart= System.currentTimeMillis();
         turnCount++;
         log.println("\nturn " + turnCount);
         this.pw = pw;
         
 		boolean easyConquest= (turnCount < 1);
 
-        List<Planet> myPlanets = pw.MyPlanets();
-        List<Planet> enemyPlanets = pw.EnemyPlanets();
-        List<Planet> otherPlanets = pw.NotMyPlanets();
+        myPlanets = pw.MyPlanets();
+        enemyPlanets = pw.EnemyPlanets();
+        otherPlanets = pw.NotMyPlanets();
         List<Planet> dests;
         List<Fleet> myFleets= pw.MyFleets();
         int myProduction = pw.Production(1);
         int enemyProduction = pw.Production(2);
 
         // make a map of attack planets for easy access
+        amAttacking= new HashMap<Integer, Boolean>();
         for (Fleet f : myFleets) {
         	amAttacking.put(f.DestinationPlanet(), true);
         }
@@ -73,6 +80,11 @@ public class MyBot {
             log.println("source " + p.PlanetID() + " (" + p.NumShips() + ")");
             attackBest(p, otherPlanets, easyConquest);
         }
+        
+        turnEnd= System.currentTimeMillis();
+        long turnTime= turnEnd-turnStart;
+        if (turnTime > turnTimeMax) turnTimeMax= turnTime;        	
+        log.println("turn took " + turnTime + "ms \n");
     }
 
     void attackBest(Planet source, List<Planet> dests, boolean easyConquest) {
@@ -99,10 +111,17 @@ public class MyBot {
             	break;
             
             int numships = p.NumShips() + 1;
+            if (p.isEnemy())
+            	numships+= pw.Distance(source, p) * p.GrowthRate();
+
             if (numships > source.NumShips())
                 numships= source.NumShips();
-
-            issueOrder(source, p, numships);
+            
+            Planet nearestMine= getMyNearestPlanet(p);
+            if (nearestMine.PlanetID() == source.PlanetID())            
+            	issueOrder(source, p, numships);
+            else
+            	issueOrder(source, nearestMine, numships);
             
             if (source.NumShips() <= 0) break;
         }
@@ -115,6 +134,19 @@ public class MyBot {
     void issueOrder(Planet s, Planet d, int numShips) {
         s.decrementShips(numShips);
         pw.IssueOrder(s, d, numShips);
+    }
+    
+    Planet getMyNearestPlanet(Planet from) {
+    	Planet nearest= null;
+    	int nearestDistance= Integer.MAX_VALUE;
+    	for (Planet p : myPlanets) {
+    		int distance= pw.Distance(from, p);
+    		if (distance < nearestDistance) {
+    			nearest= p;
+    			nearestDistance= distance;
+    		}
+    	}    	
+    	return nearest;
     }
     
     List<RelativePlanetInfo> calcTimeTillBreakEven(Planet from, List<Planet> planets) {
@@ -159,6 +191,8 @@ public class MyBot {
                     break;
                 }
             }
+            
+            bot.log.println("max turn time " + bot.turnTimeMax);
         } catch (Exception e) {
             // Owned.
         }
