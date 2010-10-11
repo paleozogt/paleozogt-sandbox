@@ -192,7 +192,7 @@ public class MyBot {
                 }
             }
             
-            bot.log.println("max turn time " + bot.turnTimeMax);
+            bot.log.println("max turn time " + bot.turnTimeMax + "ms");
         } catch (Exception e) {
             // Owned.
         }
