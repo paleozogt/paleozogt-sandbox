@@ -20,6 +20,14 @@ public class Planet implements Cloneable {
         return owner;
     }
 
+	public boolean isEnemy() {
+		return owner == 2;
+	}
+	
+	public boolean isNeutral() {
+		return owner == 0;
+	}
+
     public int NumShips() {
         return numShips;
     }
