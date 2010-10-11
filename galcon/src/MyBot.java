@@ -36,6 +36,27 @@ class SortByGrowthRate implements Comparator<Planet> {
     }
 }
 
+class SortByDistance implements Comparator<Planet> {
+	PlanetWars pw;
+	Planet from;
+	public SortByDistance(PlanetWars pw, Planet from) {
+		this.pw= pw;
+		this.from= from;
+	}
+	
+    public int compare(Planet p1, Planet p2) {
+    	int dist1= pw.Distance(from, p1);
+    	int dist2= pw.Distance(from, p2);
+    	
+        if (dist1 < dist2)
+            return -1;
+        else if (dist1 > dist2)
+            return 1;
+        else
+            return 0;
+    }
+}
+
 public class MyBot {
 
     int turnCount = -1;
@@ -117,11 +138,11 @@ public class MyBot {
             if (numships > source.NumShips())
                 numships= source.NumShips();
             
-            Planet nearestMine= getMyNearestPlanet(p);
-            if (nearestMine.PlanetID() == source.PlanetID())            
+            Planet wayPoint= getWaypoint(source, p);
+            if (wayPoint.PlanetID() == source.PlanetID())            
             	issueOrder(source, p, numships);
             else
-            	issueOrder(source, nearestMine, numships);
+            	issueOrder(source, wayPoint, numships);
             
             if (source.NumShips() <= 0) break;
         }
@@ -136,16 +157,33 @@ public class MyBot {
         pw.IssueOrder(s, d, numShips);
     }
     
-    Planet getMyNearestPlanet(Planet from) {
-    	Planet nearest= null;
-    	int nearestDistance= Integer.MAX_VALUE;
-    	for (Planet p : myPlanets) {
-    		int distance= pw.Distance(from, p);
-    		if (distance < nearestDistance) {
+    Planet getWaypoint(Planet source, Planet target) {
+    	log.println("calculating waypoint for " + source.PlanetID() + "=>" + target.PlanetID());
+    	
+    	// get a sorted list of my planets nearest to source
+    	List<Planet> nearestPlanets= new ArrayList<Planet>(myPlanets.size());
+    	nearestPlanets.addAll(myPlanets);
+    	Collections.sort(nearestPlanets, new SortByDistance(pw, source));
+    	
+    	for (Planet p : nearestPlanets) {
+    		log.println("dist " + source.PlanetID() + "=>" + p.PlanetID() + "=" + pw.Distance(source, p));
+    	}
+    	log.println("");
+    	
+    	Planet nearest= source;
+    	int bestDistance= pw.Distance(source, target);
+    	
+    	for (Planet p : nearestPlanets) {
+    		int distance= pw.Distance(p, target);
+    		log.println("dist " + p.PlanetID() + "=>" + target.PlanetID() + "=" + distance);
+    		if (distance < bestDistance) {
+    			bestDistance= distance;
     			nearest= p;
-    			nearestDistance= distance;
+    			break;
     		}
-    	}    	
+    	}
+
+    	log.println("waypoint is " + nearest.PlanetID());
     	return nearest;
     }
     
@@ -194,7 +232,7 @@ public class MyBot {
             
             bot.log.println("max turn time " + bot.turnTimeMax + "ms");
         } catch (Exception e) {
-            // Owned.
+            bot.log.println(e.toString());
         }
     }
 }
