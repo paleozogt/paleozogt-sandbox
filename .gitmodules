@@ -1,0 +1,3 @@
+[submodule "grgit"]
+	path = grgit
+	url = git@github.com:ajoberstar/grgit.git
