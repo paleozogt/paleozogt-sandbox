@@ -20,3 +20,4 @@ release {
 
 logger.lifecycle "project version {}", project.version.toString()
 logger.lifecycle "git describe {}", git.describe()
+logger.lifecycle "git status {}", git.status()
